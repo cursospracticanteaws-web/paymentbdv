@@ -1,0 +1,6 @@
+flask
+flask-cors
+requests
+playwright
+winrt-Windows.Foundation
+winrt-Windows.UI.Notifications
