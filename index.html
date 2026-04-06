@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago Móvil BDV - Ciclo 3</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #d32f2f; text-align: center; margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #d32f2f; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s; }
+        button:hover { background-color: #b71c1c; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { margin-top: 1rem; text-align: center; font-weight: bold; padding: 10px; border-radius: 6px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>📱 BDV Pago Móvil</h2>
+    <form id="pagoForm">
+        <div class="form-group">
+            <label>Cédula del Receptor</label>
+            <input type="text" id="cedula" placeholder="Ej: 33612754" required>
+        </div>
+        <div class="form-group">
+            <label>Teléfono (04XX)</label>
+            <input type="text" id="telefono" placeholder="Ej: 04242370576" required>
+        </div>
+        <div class="form-group">
+            <label>Monto (Máx 1.00 Bs.)</label>
+            <input type="number" id="monto" placeholder="0.00" step="0.01" max="1.00" required>
+        </div>
+        <button type="submit" id="btnPagar">Ejecutar Pago en Local</button>
+    </form>
+    <div id="status"></div>
+</div>
+
+<script>
+    const form = document.getElementById('pagoForm');
+    const statusDiv = document.getElementById('status');
+    const btn = document.getElementById('btnPagar');
+
+    // CONFIGURACIÓN: Reemplaza con tu URL de LocalTunnel actual
+    const API_LOCAL_URL = "https://hot-readers-refuse.loca.lt/ejecutar-pago";
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const monto = parseFloat(document.getElementById('monto').value);
+        if (monto > 1.00) {
+            alert("⚠️ Por seguridad en pruebas, el monto máximo es 1.00 Bs.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "⏳ Procesando en tu PC...";
+        statusDiv.style.display = "block";
+        statusDiv.innerText = "Enviando orden a la PC local...";
+        statusDiv.style.backgroundColor = "#e3f2fd";
+        statusDiv.style.color = "#1976d2";
+
+        const payload = {
+            cedula: document.getElementById('cedula').value,
+            telefono: document.getElementById('telefono').value,
+            monto: monto.toFixed(2)
+        };
+
+        try {
+            const response = await fetch(API_LOCAL_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            if (data.status === "success") {
+                statusDiv.innerText = "✅ ¡Pago Exitoso!";
+                statusDiv.style.backgroundColor = "#c8e6c9";
+                statusDiv.style.color = "#2e7d32";
+            } else {
+                statusDiv.innerText = "❌ Error: " + (data.message || "Error desconocido");
+                statusDiv.style.backgroundColor = "#ffcdd2";
+                statusDiv.style.color = "#c62828";
+            }
+        } catch (error) {
+            statusDiv.innerText = "🚫 No se pudo conectar con la PC. ¿Está encendido el túnel?";
+            statusDiv.style.backgroundColor = "#ffecb3";
+            statusDiv.style.color = "#856404";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Ejecutar Pago Móvil";
+        }
+    });
+</script>
+
+</body>
+</html>
